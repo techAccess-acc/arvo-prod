@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <h1>{{ title }}</h1>
+  <p>Hello from FastAPI + Jinja2 👋</p>
+
+  <!-- Chat widget -->
+  <script>
+    (function() {
+      const button = document.createElement('div');
+      button.innerHTML = '💬 Chat with us';
+      button.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #005fff;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        z-index: 10000;
+      `;
+
+      button.onclick = function() {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://tavus.daily.co/c24735dfc9cbb41b';
+        iframe.allow = 'camera; microphone; fullscreen; display-capture';
+        iframe.style.cssText = `
+          position: fixed;
+          bottom: 60px;
+          right: 20px;
+          width: 350px;
+          height: 500px;
+          border: none;
+          border-radius: 10px;
+          z-index: 10000;
+          box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        `;
+        document.body.appendChild(iframe);
+        button.style.display = 'none';
+      };
+
+      document.body.appendChild(button);
+    })();
+  </script>
+
+</body>
+</html>
