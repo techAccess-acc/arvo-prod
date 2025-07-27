@@ -56,7 +56,12 @@ def serve_html(request: Request):
 async def dynamic_widget(request: Request):
     payload = {
         "replica_id": "rfe12d8b9597",
-        "persona_id": "pdced222244b"
+        "persona_id": "pdced222244b",
+        "properties": {
+            "max_call_duration": 600,
+            "participant_left_timeout": 60,
+            "participant_absent_timeout": 300
+        }
     }
 
     try:
