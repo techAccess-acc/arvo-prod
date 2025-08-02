@@ -118,6 +118,7 @@ def query(input: str = Form(...)):
 
 @app.post("/chat/completions")
 async def universal_chat_handler(request: Request):
+    print(request)
     try:
         content_type = request.headers.get("content-type", "")
         prompt = None
