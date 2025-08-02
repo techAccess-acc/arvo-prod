@@ -119,6 +119,23 @@ def query(input: str = Form(...)):
 @app.post("/chat/completions")
 async def universal_chat_handler(request: Request):
     print(request)
+    print("📥 Method:", request.method)
+    print("📥 URL:", request.url)
+    print("📥 Headers:", dict(request.headers))
+
+    # Try reading body as JSON
+    try:
+        body = await request.json()
+        print("📥 JSON Body:", body)
+    except Exception:
+        # Try reading as form
+        try:
+            form = await request.form()
+            print("📥 Form Data:", dict(form))
+        except Exception:
+            # Fallback to raw body
+            body_bytes = await request.body()
+            print("📥 Raw Body:", body_bytes.decode("utf-8"))
     try:
         content_type = request.headers.get("content-type", "")
         prompt = None
