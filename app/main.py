@@ -86,7 +86,9 @@ from fastapi import FastAPI, Form
 import openai
 
 # app = FastAPI()
-openai.api_key = "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"
+openai_key = os.getenv("OPENAI_KEY")
+
+openai.api_key = openai_key
 
 assistant_id = "asst_fN899QQ5rTc3EG4KJka6lBpB"
 
