@@ -10,6 +10,11 @@ import os
 from dotenv import load_dotenv
 from app.services.tavus import post_to_tavus
 from fastapi.responses import Response
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from typing import Optional
+import openai
+import asyncio
 
 load_dotenv() 
 
@@ -92,7 +97,7 @@ openai.api_key = openai_key
 
 # assistant_id = "asst_fN899QQ5rTc3EG4KJka6lBpB"
 assistant_id = "asst_MrxRdog7fMsiDSyONw0ECTBA"
-@app.post("/chat/completions")
+@app.post("/chat/completionsm")
 def query(input: str = Form(...)):
     # input="Points to remember regarding replicating features in Mobile and TV platforms"
     thread = openai.beta.threads.create()
@@ -108,3 +113,75 @@ def query(input: str = Form(...)):
     messages = openai.beta.threads.messages.list(thread.id)
     return {"response": messages.data[0].content[0].text.value}
 
+
+
+
+@app.post("/chat/completions")
+async def universal_chat_handler(request: Request):
+    try:
+        content_type = request.headers.get("content-type", "")
+        prompt = None
+
+        if "application/json" in content_type:
+            body = await request.json()
+            if isinstance(body, dict):
+                # Tavus-style: OpenAI format
+                messages = body.get("messages")
+                if messages and isinstance(messages, list):
+                    prompt = next((m["content"] for m in messages if m.get("role") == "user"), None)
+                else:
+                    # Fallback for flat prompt
+                    prompt = body.get("prompt") or body.get("input")
+
+        elif "application/x-www-form-urlencoded" in content_type:
+            form = await request.form()
+            prompt = form.get("input") or form.get("prompt")
+
+        elif "text/plain" in content_type:
+            prompt = await request.body()
+            prompt = prompt.decode("utf-8")
+
+        else:
+            # Try as JSON anyway
+            try:
+                body = await request.json()
+                prompt = body.get("input") or body.get("prompt")
+            except:
+                pass
+
+        if not prompt:
+            return JSONResponse(status_code=400, content={"error": "No prompt found in request"})
+
+        # Call OpenAI Assistant (or replace with RAG)
+        thread = openai.beta.threads.create()
+        openai.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt)
+        run = openai.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
+
+        while True:
+            status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            if status.status == "completed":
+                break
+            await asyncio.sleep(0.5)
+
+        messages = openai.beta.threads.messages.list(thread_id=thread.id)
+        response_text = messages.data[0].content[0].text.value
+
+        return {
+            "id": "chatcmpl-custom-001",
+            "object": "chat.completion",
+            "created": 1234567890,
+            "model": "custom-fastapi",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": response_text
+                    },
+                    "finish_reason": "stop"
+                }
+            ]
+        }
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
