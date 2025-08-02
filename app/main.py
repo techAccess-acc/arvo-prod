@@ -81,3 +81,28 @@ async def dynamic_widget(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+from fastapi import FastAPI, Form
+import openai
+
+# app = FastAPI()
+openai.api_key = "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"
+
+assistant_id = "asst_fN899QQ5rTc3EG4KJka6lBpB"
+
+@app.post("/query")
+def query(input: str = Form(...)):
+    # input="Points to remember regarding replicating features in Mobile and TV platforms"
+    thread = openai.beta.threads.create()
+    openai.beta.threads.messages.create(thread.id, role="user", content=input)
+    run = openai.beta.threads.runs.create(thread.id, assistant_id=assistant_id)
+    while True:
+        status = openai.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id
+        )
+        if status.status == "completed":
+            break
+    messages = openai.beta.threads.messages.list(thread.id)
+    return {"response": messages.data[0].content[0].text.value}
+
