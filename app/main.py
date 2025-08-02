@@ -90,9 +90,9 @@ openai_key = os.getenv("OPENAI_KEY")
 
 openai.api_key = openai_key
 
-assistant_id = "asst_fN899QQ5rTc3EG4KJka6lBpB"
-
-@app.post("/query")
+# assistant_id = "asst_fN899QQ5rTc3EG4KJka6lBpB"
+assistant_id = "asst_MrxRdog7fMsiDSyONw0ECTBA"
+@app.post("/chat/completions")
 def query(input: str = Form(...)):
     # input="Points to remember regarding replicating features in Mobile and TV platforms"
     thread = openai.beta.threads.create()
