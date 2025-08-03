@@ -116,7 +116,7 @@ def query(input: str = Form(...)):
 
 
 
-@app.post("/chat/completions")
+@app.post("/chat/completionsn")
 async def universal_chat_handler(request: Request):
     print(request)
     print("📥 Method:", request.method)
@@ -203,3 +203,48 @@ async def universal_chat_handler(request: Request):
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+    
+import time
+
+@app.post("/chat/completions")
+async def rag_proxy(request: Request):
+    body = await request.json()
+    # 1. Open a new thread
+    thread = openai.beta.threads.create()
+    # 2. Replay all incoming system messages (so perception tags get passed through)
+    for m in body.get("messages", []):
+        if m["role"] in ("system", "user"):
+            openai.beta.threads.messages.create(
+                thread_id=thread.id,
+                role=m["role"],
+                content=m["content"]
+            )
+    # 3. Kick off the assistant run
+    run = openai.beta.threads.runs.create(
+        thread_id=thread.id,
+        assistant_id=assistant_id
+    )
+    # 4. Poll until done
+    while True:
+        status = openai.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id
+        )
+        if status.status == "completed":
+            break
+        await asyncio.sleep(0.5)
+    # 5. Grab its reply
+    messages = openai.beta.threads.messages.list(thread_id=thread.id)
+    reply = messages.data[-1].content[0].text.value
+    # 6. Return in Tavus’s expected schema
+    return {
+      "id": "chatcmpl-001",
+      "object": "chat.completion",
+      "created": int(time.time()),
+      "model": "my_model",
+      "choices": [{
+        "index": 0,
+        "message": {"role": "assistant", "content": reply},
+        "finish_reason": "stop"
+      }]
+    }
