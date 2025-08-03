@@ -209,22 +209,25 @@ import time
 @app.post("/chat/completions")
 async def rag_proxy(request: Request):
     body = await request.json()
-    # 1. Open a new thread
+    # 1. Create a thread
     thread = openai.beta.threads.create()
-    # 2. Replay all incoming system messages (so perception tags get passed through)
+
+    # 2. Forward only user messages
     for m in body.get("messages", []):
-        if m["role"] in ("system", "user"):
+        if m["role"] == "user":
             openai.beta.threads.messages.create(
                 thread_id=thread.id,
-                role=m["role"],
+                role="user",
                 content=m["content"]
             )
-    # 3. Kick off the assistant run
+
+    # 3. Kick off the run
     run = openai.beta.threads.runs.create(
         thread_id=thread.id,
         assistant_id=assistant_id
     )
-    # 4. Poll until done
+
+    # 4. Wait for completion
     while True:
         status = openai.beta.threads.runs.retrieve(
             thread_id=thread.id,
@@ -233,10 +236,12 @@ async def rag_proxy(request: Request):
         if status.status == "completed":
             break
         await asyncio.sleep(0.5)
-    # 5. Grab its reply
+
+    # 5. Fetch the assistant’s reply
     messages = openai.beta.threads.messages.list(thread_id=thread.id)
     reply = messages.data[-1].content[0].text.value
-    # 6. Return in Tavus’s expected schema
+
+    # 6. Return in Tavus format
     return {
       "id": "chatcmpl-001",
       "object": "chat.completion",
