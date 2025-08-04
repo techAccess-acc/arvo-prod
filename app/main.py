@@ -89,6 +89,8 @@ async def dynamic_widget(request: Request):
     
 from fastapi import FastAPI, Form
 import openai
+import time
+
 
 # app = FastAPI()
 openai_key = os.getenv("OPENAI_KEY")
@@ -204,9 +206,7 @@ async def universal_chat_handler(request: Request):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
     
-import time
-
-@app.post("/chat/completions")
+@app.post("/chat/completionsk")
 async def rag_proxy(request: Request):
     body = await request.json()
     # 1. Create a thread
@@ -253,3 +253,44 @@ async def rag_proxy(request: Request):
         "finish_reason": "stop"
       }]
     }
+
+import os
+import json
+from fastapi import Request
+from starlette.responses import StreamingResponse
+from openai import OpenAI
+
+# create a dedicated client for streaming completions
+OPENAI_API_KEY = os.getenv("OPENAI_KEY")
+stream_client = OpenAI(api_key=OPENAI_API_KEY)
+# stream_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+@app.post("/chat/completions")
+async def chat_stream(request: Request):
+    """
+    A Server-Sent Events (SSE) endpoint that proxies to gpt-4o-mini with streaming.
+    """
+    # 1. parse incoming messages
+    body = await request.json()
+    messages = body.get("messages", [])
+
+    # 2. generator that yields SSE data frames
+    def event_generator():
+        stream = stream_client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=messages, 
+            stream=True
+        )
+        for chunk in stream:
+            delta = chunk.choices[0].delta
+            if delta.content:
+                print("🔹 chunk:", delta.content)  
+
+                payload = {"choices":[{"delta":{"content": delta.content}}]}
+                # SSE format: "data: <json>\n\n"
+                yield f"data: {json.dumps(payload)}\n\n"
+        # signal completion
+        yield "data: [DONE]\n\n"
+
+    # 3. return an event stream
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
