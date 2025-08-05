@@ -7,7 +7,7 @@ router = APIRouter()
 @router.get("/start-conversation")
 async def start_conversation():
     payload = {
-        "replica_id": "rfe12d8b9597",
+        "replica_id": "r9d30b0e55ac",
         "persona_id": "pe13ed370726"
     }
 
