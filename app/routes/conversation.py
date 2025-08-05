@@ -8,7 +8,7 @@ router = APIRouter()
 async def start_conversation():
     payload = {
         "replica_id": "rfe12d8b9597",
-        "persona_id": "pdced222244b"
+        "persona_id": "pe13ed370726"
     }
 
     try:
