@@ -265,7 +265,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_KEY")
 stream_client = OpenAI(api_key=OPENAI_API_KEY)
 # stream_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-@app.post("/chat/completions-best")
+
+#working normal chat completion bot
+@app.post("/chat/completions")
 async def chat_stream(request: Request):
     """
     A Server-Sent Events (SSE) endpoint that proxies to gpt-4o-mini with streaming.
@@ -383,8 +385,8 @@ def query_sync(input: str = Form(...)):
         return {"error": str(e)}
     
 
-
-@app.post("/chat/completions")
+#working assitant with RAG
+@app.post("/RAG/chat/completions")
 async def chat_stream(request: Request):
     """
     A Server-Sent Events (SSE) endpoint that uses OpenAI Assistant with knowledge base
