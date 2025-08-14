@@ -66,8 +66,8 @@ async def dynamic_widget(request: Request):
         "persona_id": "p2ca7da2b97e",
         "properties": {
             "max_call_duration": 600,
-            "participant_left_timeout": 60,
-            "participant_absent_timeout": 300
+            "participant_left_timeout": 10,
+            "participant_absent_timeout": 120
         }
     }
 
