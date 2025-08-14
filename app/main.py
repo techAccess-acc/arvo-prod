@@ -20,7 +20,9 @@ load_dotenv()
 
 app = FastAPI()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-tavus_key = os.getenv("TAVUS_KEY")
+
+active_num = int(os.getenv("ACTIVE_KEY"))
+tavus_key = os.getenv(f"TAVUS_KEY_{active_num}")
 
 # Register routes
 app.include_router(user.router, prefix="/users", tags=["Users"])
@@ -60,8 +62,8 @@ def serve_html(request: Request):
 @app.get("/file/widget.js")
 async def dynamic_widget(request: Request):
     payload = {
-        "replica_id": "rfe12d8b9597",
-        "persona_id": "pdced222244b",
+        "replica_id": "r91587ff7648",
+        "persona_id": "p2ca7da2b97e",
         "properties": {
             "max_call_duration": 600,
             "participant_left_timeout": 60,
